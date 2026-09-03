@@ -1,129 +1,371 @@
-# University Course Prerequisite Management Using Topological Sorting
+# Kerberos-Based Enterprise Authentication System
 
-## Course
+## Cryptography Course Assignment
 
-**CSA03 – Data Structures – Slot D**
+### Project Title
 
-## Project Description
+**Kerberos-Based Enterprise Authentication for Secure Identity Management and Service Access**
 
-This project presents a graph-based solution for managing university course prerequisites using Topological Sorting. Each course is represented as a vertex in a directed graph, while a prerequisite relationship is represented as a directed edge.
+---
 
-The proposed system generates a valid course-taking order based on prerequisite dependencies. It also detects cycles in the prerequisite graph. If a cycle exists, a valid course sequence cannot be generated because the courses involved depend on one another.
+## 1. Problem Statement
 
-## Problem Statement
+A large enterprise with more than 500 employees uses multiple internal applications, databases, file servers, and web services. The existing password-based authentication mechanism creates security concerns such as credential theft, unauthorized access, password reuse, and identity management challenges.
 
-Universities contain several courses with prerequisite relationships. Manually determining a valid order in which students should complete these courses can become difficult when the number of courses and dependencies increases.
+The organization requires a secure authentication mechanism that provides strong identity verification, centralized authentication, secure service access, scalability, accountability, and resistance against credential and replay attacks.
 
-The problem is formulated using a Directed Acyclic Graph (DAG), where:
+This project examines the **Kerberos authentication framework** and demonstrates its role in secure enterprise identity management. The implementation models communication between a client, Authentication Server (AS), Ticket Granting Server (TGS), and application/service server.
 
-* Vertex → University course
-* Directed edge → Prerequisite dependency
-* Topological ordering → Valid course-taking sequence
+---
 
-If the prerequisite graph contains a cycle, no valid topological ordering exists.
+## 2. Objectives
 
-## Objectives
+The main objectives of this project are:
 
-* Represent university courses using a directed graph.
-* Represent prerequisite relationships using directed edges.
-* Apply Topological Sorting to generate a valid course sequence.
-* Detect cycles in the prerequisite graph.
-* Demonstrate the practical application of graph data structures.
+* To understand the Kerberos authentication framework.
+* To implement a simplified Kerberos authentication process.
+* To demonstrate user authentication using an Authentication Server.
+* To generate and validate authentication tickets.
+* To demonstrate Ticket Granting Ticket (TGT) generation.
+* To demonstrate service-ticket acquisition from the TGS.
+* To provide secure access to an application server.
+* To reduce direct transmission of user passwords.
+* To demonstrate protection against replay attacks using timestamps.
+* To compare Kerberos authentication with conventional password-based authentication.
+* To develop a suitable enterprise authentication strategy.
 
-## Concepts Used
+---
 
-* Graphs
-* Directed Graphs
-* Adjacency Matrix / Adjacency List
-* In-degree
-* Queue
-* Topological Sorting
-* Cycle Detection
-* Time Complexity Analysis
+## 3. Kerberos Components
 
-## Algorithm
+The implementation consists of the following major components:
 
-1. Create a directed graph containing all courses.
-2. Add an edge from each prerequisite course to its dependent course.
-3. Calculate the in-degree of every course.
-4. Insert all courses with in-degree 0 into a queue.
-5. Remove a course from the queue and add it to the topological ordering.
-6. Reduce the in-degree of its adjacent courses.
-7. Add newly available zero in-degree courses to the queue.
-8. Continue until the queue becomes empty.
-9. If all courses are processed, the ordering is valid.
-10. If some courses remain unprocessed, the graph contains a cycle.
+### Client
 
-## Complexity
+The client represents an employee attempting to access an enterprise service.
 
-For a graph containing `V` courses and `E` prerequisite relationships:
+### Authentication Server (AS)
 
-**Time Complexity:** O(V + E)
+The Authentication Server verifies the user's identity and provides a Ticket Granting Ticket (TGT).
 
-**Space Complexity:** O(V + E)
+### Ticket Granting Server (TGS)
 
-## Implementation Language
+The TGS validates the TGT and issues a service ticket for the requested application or service.
 
-* C
+### Application / Service Server
 
-## Environment / Tools
+The service server validates the service ticket and grants access to the requested enterprise service.
 
-* C Compiler
-* Visual Studio Code / Code::Blocks / GCC
-* Git
-* GitHub
+### Key Distribution Center (KDC)
 
-## Test Cases
+In a complete Kerberos deployment, the Authentication Server and Ticket Granting Server together form the KDC.
 
-### Test Case 1 – Valid Prerequisite Graph
+---
 
-A prerequisite graph without cycles should produce a valid course-taking order.
+## 4. Kerberos Authentication Workflow
 
-**Expected Result:**
-A valid topological ordering is generated.
+The simplified authentication process follows these stages:
 
-### Test Case 2 – Graph Containing a Cycle
+1. The client requests authentication from the Authentication Server.
+2. The Authentication Server verifies the user's credentials.
+3. The Authentication Server generates a Ticket Granting Ticket (TGT).
+4. The client sends the TGT to the Ticket Granting Server.
+5. The client requests access to a particular enterprise service.
+6. The TGS validates the TGT.
+7. The TGS generates a service ticket.
+8. The client sends the service ticket to the application server.
+9. The application server validates the ticket.
+10. If the ticket is valid and has not expired, access is granted.
 
-A prerequisite graph containing circular dependencies should not produce a valid ordering.
+---
 
-**Expected Result:**
-The program identifies the cycle and reports that a valid course sequence cannot be generated.
+## 5. Security Features Demonstrated
 
-### Test Case 3 – Course With Multiple Prerequisites
+The implementation demonstrates important Kerberos security concepts:
 
-A course may depend on multiple prerequisite courses.
+* Centralized authentication
+* Ticket-based authentication
+* Session keys
+* Timestamp-based validation
+* Ticket expiration
+* Service-specific tickets
+* Password protection
+* Replay attack resistance
+* Centralized identity management
+* Controlled access to enterprise services
 
-**Expected Result:**
-The dependent course appears only after all its prerequisites have been processed.
+---
 
-## Results
+## 6. Enterprise Authentication Strategy
 
-The implementation successfully represents the prerequisite system as a directed graph and applies Topological Sorting to generate a valid course-taking sequence. The system also detects cyclic dependencies and prevents invalid course sequences.
+A suitable enterprise authentication strategy based on Kerberos should include:
 
-## SDG Relevance
+### Centralized Identity Management
 
-The project supports **SDG 4 – Quality Education** by providing a structured approach to course planning and prerequisite management. A systematic course sequence can help students understand academic dependencies and plan their learning progression more effectively.
+Employee identities should be maintained centrally through an enterprise identity directory integrated with the Kerberos infrastructure.
 
-## Limitations
+### Strong Authentication
 
-* The current implementation uses a fixed set of courses.
-* Course information is entered manually.
-* It does not maintain a permanent database.
-* It does not provide a graphical user interface.
+Kerberos should be combined with strong password policies and, where appropriate, multi-factor authentication.
 
-## Future Improvements
+### Ticket-Based Service Access
 
-* Add a graphical user interface.
-* Store course information using a database.
-* Allow dynamic addition and deletion of courses.
-* Provide semester-wise course planning.
-* Add prerequisite validation for individual students.
-* Develop a web-based version.
+Users should obtain service tickets instead of repeatedly sending passwords to individual applications.
 
-## Authors
+### Ticket Lifetime Management
 
-**D. Saketh – 192525018**
+Tickets should have limited lifetimes to reduce the impact of stolen or compromised tickets.
 
-**Course:** CSA03 – Data Structures
+### Secure Key Management
+
+Cryptographic keys used by users and services must be protected using secure key-management practices.
+
+### Monitoring and Accountability
+
+Authentication events, ticket requests, failed authentication attempts, and service access should be logged and monitored.
+
+---
+
+## 7. Kerberos vs Password-Based Authentication
+
+| Feature                 | Password-Based Authentication             | Kerberos                                           |
+| ----------------------- | ----------------------------------------- | -------------------------------------------------- |
+| Authentication Strength | Moderate                                  | Strong                                             |
+| Credential Protection   | Password may be repeatedly used           | Password is not repeatedly sent to services        |
+| Centralized Identity    | Limited / depends on implementation       | Strong                                             |
+| Scalability             | Can become difficult across many services | Suitable for large enterprises                     |
+| Usability               | Users may enter passwords repeatedly      | Single Sign-On capability                          |
+| Replay Resistance       | Depends on implementation                 | Uses timestamps and ticket lifetimes               |
+| Service Access          | Password-based                            | Ticket-based                                       |
+| Credential Theft Risk   | Higher                                    | Reduced                                            |
+| Centralized Control     | Moderate                                  | High                                               |
+| Accountability          | Depends on logging                        | Centralized authentication enables better auditing |
+
+---
+
+## 8. Advantages of Kerberos
+
+* Provides centralized authentication.
+* Supports Single Sign-On (SSO).
+* Reduces repeated password transmission.
+* Uses cryptographic tickets for service access.
+* Provides limited ticket lifetimes.
+* Uses timestamps to help prevent replay attacks.
+* Scales effectively for enterprise environments.
+* Separates authentication from individual application services.
+* Improves centralized identity management.
+
+---
+
+## 9. Limitations
+
+Although Kerberos provides strong authentication, it also has limitations:
+
+* The KDC is a critical infrastructure component.
+* If the KDC becomes unavailable, authentication can be affected.
+* Secure time synchronization is required.
+* Initial configuration can be complex.
+* Poor key management can weaken security.
+* Compromised credentials can still be exploited.
+* Legacy applications may require additional integration mechanisms.
+
+---
+
+## 10. Recommended Improvements
+
+The enterprise authentication architecture can be strengthened by implementing:
+
+1. Multi-factor authentication (MFA).
+2. Strong password and credential policies.
+3. Secure key management.
+4. Regular ticket and credential rotation.
+5. Network monitoring and centralized security logging.
+6. Accurate and secure time synchronization.
+7. Redundant Authentication Servers and TGS infrastructure.
+8. Least-privilege access control.
+9. Continuous monitoring of authentication activity.
+10. Periodic security audits and incident-response procedures.
+
+---
+
+## 11. SDG Relevance
+
+This project is relevant to:
+
+### SDG 9 – Industry, Innovation and Infrastructure
+
+Secure authentication contributes to resilient digital infrastructure and trusted enterprise services.
+
+### SDG 16 – Peace, Justice and Strong Institutions
+
+Kerberos supports accountable and secure access to organizational resources through centralized authentication, access control, and auditability.
+
+---
+
+## 12. Technologies Used
+
+* **Programming Language:** C
+* **Cryptography Concepts:** Symmetric-key cryptography, authentication tickets, session keys, timestamps
+* **Development Environment:** GCC / Visual Studio Code
+* **Version Control:** Git
+* **Repository:** GitHub
+
+---
+
+## 13. Project Structure
+
+```text
+Kerberos-Enterprise-Authentication/
+│
+├── README.md
+│
+├── src/
+│   └── kerberos_authentication.c
+│
+├── test_cases/
+│   └── test_cases.txt
+│
+├── screenshots/
+│   ├── authentication.png
+│   ├── tgt_generation.png
+│   ├── service_ticket.png
+│   └── secure_access.png
+│
+└── docs/
+    └── Assignment_Report.pdf
+```
+
+---
+
+## 14. Test Cases
+
+### Test Case 1 – Valid User Authentication
+
+**Input:** Valid username and password
+
+**Expected Result:** Authentication successful and TGT generated.
+
+**Status:** PASS
+
+### Test Case 2 – Invalid Credentials
+
+**Input:** Incorrect username/password
+
+**Expected Result:** Authentication rejected.
+
+**Status:** PASS
+
+### Test Case 3 – Service Ticket Request
+
+**Input:** Valid TGT and requested service
+
+**Expected Result:** TGS generates a valid service ticket.
+
+**Status:** PASS
+
+### Test Case 4 – Secure Service Access
+
+**Input:** Valid and unexpired service ticket
+
+**Expected Result:** Application server grants access.
+
+**Status:** PASS
+
+### Test Case 5 – Expired Ticket
+
+**Input:** Expired service ticket
+
+**Expected Result:** Access rejected.
+
+**Status:** PASS
+
+### Test Case 6 – Replay Detection
+
+**Input:** Previously used/invalid timestamp or replayed authentication request
+
+**Expected Result:** Authentication request rejected.
+
+**Status:** PASS
+
+---
+
+## 15. Expected Outcome
+
+The implementation demonstrates the complete simplified Kerberos authentication process:
+
+```text
+Client
+   |
+   | Authentication Request
+   v
+Authentication Server (AS)
+   |
+   | Ticket Granting Ticket (TGT)
+   v
+Client
+   |
+   | TGT + Service Request
+   v
+Ticket Granting Server (TGS)
+   |
+   | Service Ticket
+   v
+Client
+   |
+   | Service Ticket
+   v
+Application / Service Server
+   |
+   | Access Granted
+   v
+Enterprise Service
+```
+
+The system demonstrates that Kerberos can provide secure, centralized and ticket-based authentication for enterprise environments.
+
+---
+
+## 16. Conclusion
+
+Kerberos provides a strong framework for enterprise authentication by replacing repeated password-based service authentication with ticket-based access. The Authentication Server and Ticket Granting Server provide centralized identity verification and controlled access to enterprise services.
+
+Compared with conventional password-based authentication, Kerberos provides better credential protection, Single Sign-On, centralized identity management, ticket expiration, and improved resistance to replay attacks when properly configured.
+
+For an enterprise with more than 500 employees and multiple internal services, a Kerberos-based authentication strategy combined with MFA, secure key management, redundancy, monitoring, and strong access-control policies provides a more secure and scalable authentication architecture.
+
+---
+
+## 17. Future Enhancements
+
+Future versions of the project can include:
+
+* Real AES-based encryption.
+* HMAC-based ticket integrity verification.
+* Real client/server network communication.
+* Multi-factor authentication.
+* LDAP/Active Directory integration.
+* Database-backed user management.
+* Ticket renewal and revocation.
+* Centralized security logging.
+* Real-time authentication monitoring.
+* Distributed and redundant KDC deployment.
+
+---
+
+## 18. Author
+
+**D. Saketh**
+**Register Number:** 192525018
+**Course:** Cryptography
 **Department:** Computer Science and Engineering
 
+---
+
+## 19. References
+
+1. B. C. Neuman and T. Ts'o, "Kerberos: An Authentication Service for Computer Networks."
+2. RFC 4120 – The Kerberos Network Authentication Service (V5).
+3. William Stallings, *Cryptography and Network Security: Principles and Practice*.
+4. Git – Version Control System.
+5. GCC – GNU Compiler Collection.
+6. C Programming Language documentation.
