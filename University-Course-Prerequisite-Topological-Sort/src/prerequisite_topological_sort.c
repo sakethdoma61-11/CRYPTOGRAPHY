@@ -1,226 +1,286 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define MAX_COURSES 20
+#define MAX_USERS 10
 #define MAX_NAME 50
+#define TICKET_LIFETIME 300
 
+/* User database */
 typedef struct {
-    char name[MAX_NAME];
-} Course;
+    char username[MAX_NAME];
+    char password[MAX_NAME];
+} User;
 
-Course courses[MAX_COURSES];
-int graph[MAX_COURSES][MAX_COURSES];
-int indegree[MAX_COURSES];
-int courseCount = 0;
+/* Ticket Granting Ticket */
+typedef struct {
+    char username[MAX_NAME];
+    char sessionKey[MAX_NAME];
+    time_t issueTime;
+    time_t expiryTime;
+    int valid;
+} TGT;
 
-/* Find the index of a course */
-int findCourse(char name[]) {
-    for (int i = 0; i < courseCount; i++) {
-        if (strcmp(courses[i].name, name) == 0) {
-            return i;
-        }
-    }
-    return -1;
+/* Service Ticket */
+typedef struct {
+    char username[MAX_NAME];
+    char serviceName[MAX_NAME];
+    char sessionKey[MAX_NAME];
+    time_t issueTime;
+    time_t expiryTime;
+    int valid;
+} ServiceTicket;
+
+/* Global user database */
+User users[MAX_USERS] = {
+    {"saketh", "crypto123"},
+    {"admin", "admin123"},
+    {"employee1", "emp123"}
+};
+
+int userCount = 3;
+
+/* Generate a simple session key for demonstration */
+void generateSessionKey(char *key, const char *username)
+{
+    sprintf(key, "SK_%s_%ld", username, (long)time(NULL));
 }
 
-/* Add a new course */
-void addCourse(char name[]) {
-    if (courseCount >= MAX_COURSES) {
-        printf("Maximum number of courses reached.\n");
-        return;
-    }
-
-    if (findCourse(name) != -1) {
-        printf("Course already exists.\n");
-        return;
-    }
-
-    strcpy(courses[courseCount].name, name);
-    courseCount++;
-
-    printf("Course '%s' added successfully.\n", name);
-}
-
-/* Add prerequisite relationship */
-void addPrerequisite(char prerequisite[], char course[]) {
-    int pre = findCourse(prerequisite);
-    int current = findCourse(course);
-
-    if (pre == -1 || current == -1) {
-        printf("One or both courses do not exist.\n");
-        return;
-    }
-
-    if (graph[pre][current] == 1) {
-        printf("Prerequisite relationship already exists.\n");
-        return;
-    }
-
-    graph[pre][current] = 1;
-    indegree[current]++;
-
-    printf("%s -> %s prerequisite relationship added.\n",
-           prerequisite, course);
-}
-
-/* Display all courses */
-void displayCourses() {
-    printf("\nCourses:\n");
-
-    for (int i = 0; i < courseCount; i++) {
-        printf("%d. %s\n", i + 1, courses[i].name);
-    }
-}
-
-/* Display prerequisite relationships */
-void displayGraph() {
-    printf("\nPrerequisite Relationships:\n");
-
-    int found = 0;
-
-    for (int i = 0; i < courseCount; i++) {
-        for (int j = 0; j < courseCount; j++) {
-            if (graph[i][j] == 1) {
-                printf("%s -> %s\n",
-                       courses[i].name,
-                       courses[j].name);
-                found = 1;
-            }
+/* Find user in database */
+int authenticateUser(const char *username, const char *password)
+{
+    for (int i = 0; i < userCount; i++) {
+        if (strcmp(users[i].username, username) == 0 &&
+            strcmp(users[i].password, password) == 0) {
+            return 1;
         }
     }
 
-    if (!found) {
-        printf("No prerequisite relationships available.\n");
-    }
+    return 0;
 }
 
-/* Perform Topological Sort using Kahn's Algorithm */
-void topologicalSort() {
-    int tempIndegree[MAX_COURSES];
-    int queue[MAX_COURSES];
-    int front = 0;
-    int rear = 0;
-    int order[MAX_COURSES];
-    int count = 0;
+/* Authentication Server generates TGT */
+TGT authenticationServer(const char *username)
+{
+    TGT ticket;
 
-    /* Copy original in-degree values */
-    for (int i = 0; i < courseCount; i++) {
-        tempIndegree[i] = indegree[i];
+    strcpy(ticket.username, username);
+
+    generateSessionKey(ticket.sessionKey, username);
+
+    ticket.issueTime = time(NULL);
+    ticket.expiryTime = ticket.issueTime + TICKET_LIFETIME;
+    ticket.valid = 1;
+
+    printf("\n============================================\n");
+    printf(" AUTHENTICATION SERVER (AS)\n");
+    printf("============================================\n");
+
+    printf("User authenticated successfully.\n");
+    printf("TGT generated for user: %s\n", ticket.username);
+    printf("Session Key: %s\n", ticket.sessionKey);
+    printf("Ticket Lifetime: %d seconds\n", TICKET_LIFETIME);
+
+    return ticket;
+}
+
+/* Check whether TGT is valid */
+int validateTGT(TGT *tgt)
+{
+    time_t currentTime = time(NULL);
+
+    if (!tgt->valid) {
+        return 0;
     }
 
-    /* Add courses with zero in-degree */
-    for (int i = 0; i < courseCount; i++) {
-        if (tempIndegree[i] == 0) {
-            queue[rear++] = i;
-        }
+    if (currentTime > tgt->expiryTime) {
+        tgt->valid = 0;
+        return 0;
     }
 
-    /* Process the queue */
-    while (front < rear) {
-        int current = queue[front++];
+    return 1;
+}
 
-        order[count++] = current;
+/* Ticket Granting Server generates service ticket */
+ServiceTicket ticketGrantingServer(TGT *tgt, const char *serviceName)
+{
+    ServiceTicket ticket;
 
-        for (int i = 0; i < courseCount; i++) {
-            if (graph[current][i] == 1) {
-                tempIndegree[i]--;
+    strcpy(ticket.username, tgt->username);
+    strcpy(ticket.serviceName, serviceName);
 
-                if (tempIndegree[i] == 0) {
-                    queue[rear++] = i;
-                }
-            }
-        }
+    generateSessionKey(ticket.sessionKey, tgt->username);
+
+    ticket.issueTime = time(NULL);
+    ticket.expiryTime = ticket.issueTime + TICKET_LIFETIME;
+    ticket.valid = 1;
+
+    printf("\n============================================\n");
+    printf(" TICKET GRANTING SERVER (TGS)\n");
+    printf("============================================\n");
+
+    printf("TGT validated successfully.\n");
+    printf("Service requested: %s\n", serviceName);
+    printf("Service ticket generated.\n");
+    printf("Service Session Key: %s\n", ticket.sessionKey);
+
+    return ticket;
+}
+
+/* Application server validates service ticket */
+int applicationServer(ServiceTicket *ticket)
+{
+    time_t currentTime = time(NULL);
+
+    printf("\n============================================\n");
+    printf(" APPLICATION / SERVICE SERVER\n");
+    printf("============================================\n");
+
+    if (!ticket->valid) {
+        printf("ACCESS DENIED: Invalid service ticket.\n");
+        return 0;
     }
 
-    printf("\n----------------------------------------\n");
-    printf("COURSE-TAKING ORDER\n");
-    printf("----------------------------------------\n");
-
-    /* Cycle detection */
-    if (count != courseCount) {
-        printf("Cycle detected in the prerequisite graph.\n");
-        printf("A valid course-taking order cannot be generated.\n");
-        printf("----------------------------------------\n");
-        return;
+    if (currentTime > ticket->expiryTime) {
+        ticket->valid = 0;
+        printf("ACCESS DENIED: Service ticket has expired.\n");
+        return 0;
     }
 
-    printf("Valid course sequence:\n\n");
+    printf("Service ticket validated successfully.\n");
+    printf("User: %s\n", ticket->username);
+    printf("Service: %s\n", ticket->serviceName);
+    printf("ACCESS GRANTED.\n");
 
-    for (int i = 0; i < count; i++) {
-        printf("%d. %s\n", i + 1, courses[order[i]].name);
+    return 1;
+}
+
+/* Demonstrate ticket information */
+void displayTicketInformation(TGT *tgt, ServiceTicket *serviceTicket)
+{
+    printf("\n============================================\n");
+    printf(" TICKET INFORMATION\n");
+    printf("============================================\n");
+
+    printf("\n--- Ticket Granting Ticket (TGT) ---\n");
+    printf("Username       : %s\n", tgt->username);
+    printf("Session Key    : %s\n", tgt->sessionKey);
+    printf("Issue Time     : %s", ctime(&tgt->issueTime));
+    printf("Expiry Time    : %s", ctime(&tgt->expiryTime));
+    printf("Status         : %s\n",
+           tgt->valid ? "VALID" : "INVALID");
+
+    printf("\n--- Service Ticket ---\n");
+    printf("Username       : %s\n", serviceTicket->username);
+    printf("Service        : %s\n", serviceTicket->serviceName);
+    printf("Session Key    : %s\n", serviceTicket->sessionKey);
+    printf("Issue Time     : %s", ctime(&serviceTicket->issueTime));
+    printf("Expiry Time    : %s", ctime(&serviceTicket->expiryTime));
+    printf("Status         : %s\n",
+           serviceTicket->valid ? "VALID" : "INVALID");
+}
+
+/* Replay attack demonstration */
+void replayAttackTest(ServiceTicket *ticket)
+{
+    printf("\n============================================\n");
+    printf(" REPLAY ATTACK DETECTION TEST\n");
+    printf("============================================\n");
+
+    /*
+     * Simulate an already-used/invalid ticket.
+     * In a real Kerberos system, authenticators,
+     * timestamps and replay caches are used.
+     */
+
+    ticket->valid = 0;
+
+    printf("Attacker attempts to reuse the service ticket...\n");
+
+    if (!ticket->valid) {
+        printf("REPLAY DETECTED.\n");
+        printf("ACCESS DENIED.\n");
+    } else {
+        printf("ACCESS GRANTED.\n");
     }
-
-    printf("\nNo cycle detected.\n");
-    printf("Valid topological ordering generated successfully.\n");
-    printf("----------------------------------------\n");
 }
 
 /* Main function */
-int main() {
-    int choice;
-    char prerequisite[MAX_NAME];
-    char course[MAX_NAME];
-    char name[MAX_NAME];
+int main()
+{
+    char username[MAX_NAME];
+    char password[MAX_NAME];
+    char serviceName[MAX_NAME];
 
-    printf("==============================================\n");
-    printf(" UNIVERSITY COURSE PREREQUISITE MANAGEMENT\n");
-    printf("       USING TOPOLOGICAL SORTING\n");
-    printf("==============================================\n");
+    TGT tgt;
+    ServiceTicket serviceTicket;
 
-    while (1) {
-        printf("\n");
-        printf("------------- MENU ----------------\n");
-        printf("1. Add Course\n");
-        printf("2. Add Prerequisite Relationship\n");
-        printf("3. Display Courses\n");
-        printf("4. Display Prerequisite Graph\n");
-        printf("5. Generate Valid Course Order\n");
-        printf("6. Exit\n");
-        printf("-----------------------------------\n");
+    printf("====================================================\n");
+    printf("      KERBEROS ENTERPRISE AUTHENTICATION SYSTEM\n");
+    printf("====================================================\n");
 
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
+    printf("\nEnter Username: ");
+    scanf("%49s", username);
 
-        switch (choice) {
+    printf("Enter Password: ");
+    scanf("%49s", password);
 
-            case 1:
-                printf("Enter course name: ");
-                scanf(" %[^\n]", name);
+    /* Step 1: Client Authentication */
+    printf("\n[CLIENT]\n");
+    printf("Sending authentication request to Authentication Server...\n");
 
-                addCourse(name);
-                break;
+    /* Step 2: Authentication Server */
+    if (!authenticateUser(username, password)) {
 
-            case 2:
-                printf("Enter prerequisite course: ");
-                scanf(" %[^\n]", prerequisite);
+        printf("\n============================================\n");
+        printf(" AUTHENTICATION FAILED\n");
+        printf("============================================\n");
 
-                printf("Enter dependent course: ");
-                scanf(" %[^\n]", course);
+        printf("Invalid username or password.\n");
+        printf("ACCESS DENIED.\n");
 
-                addPrerequisite(prerequisite, course);
-                break;
-
-            case 3:
-                displayCourses();
-                break;
-
-            case 4:
-                displayGraph();
-                break;
-
-            case 5:
-                topologicalSort();
-                break;
-
-            case 6:
-                printf("\nThank you for using the system.\n");
-                exit(0);
-
-            default:
-                printf("Invalid choice. Please try again.\n");
-        }
+        return 0;
     }
+
+    tgt = authenticationServer(username);
+
+    /* Step 3: Client requests service */
+    printf("\n[CLIENT]\n");
+    printf("TGT received from Authentication Server.\n");
+
+    printf("\nEnter service to access: ");
+    scanf("%49s", serviceName);
+
+    printf("\n[CLIENT -> TGS]\n");
+    printf("Requesting service ticket...\n");
+
+    /* Step 4: Validate TGT */
+    if (!validateTGT(&tgt)) {
+        printf("\nTGT is invalid or expired.\n");
+        printf("Service ticket cannot be generated.\n");
+        return 0;
+    }
+
+    /* Step 5: TGS generates service ticket */
+    serviceTicket =
+        ticketGrantingServer(&tgt, serviceName);
+
+    /* Step 6: Client sends service ticket */
+    printf("\n[CLIENT -> APPLICATION SERVER]\n");
+    printf("Sending service ticket...\n");
+
+    /* Step 7: Application server grants access */
+    applicationServer(&serviceTicket);
+
+    /* Display ticket details */
+    displayTicketInformation(&tgt, &serviceTicket);
+
+    /* Demonstrate replay detection */
+    replayAttackTest(&serviceTicket);
+
+    printf("\n====================================================\n");
+    printf("              KERBEROS PROCESS COMPLETED\n");
+    printf("====================================================\n");
 
     return 0;
 }
