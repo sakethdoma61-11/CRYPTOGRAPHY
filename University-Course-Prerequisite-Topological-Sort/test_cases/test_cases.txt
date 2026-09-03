@@ -1,0 +1,48 @@
+TEST CASE 1
+-------------
+Input:
+Courses: A B C D
+Prerequisites:
+A -> B
+B -> C
+A -> D
+
+Expected:
+A should appear before B and D.
+B should appear before C.
+
+Result:
+PASS
+
+
+TEST CASE 2
+-------------
+Input:
+Courses: A B C
+Prerequisites:
+A -> B
+B -> C
+C -> A
+
+Expected:
+Cycle should be detected.
+
+Result:
+PASS
+
+
+TEST CASE 3
+-------------
+Input:
+Courses: A B C D
+Prerequisites:
+A -> C
+B -> C
+C -> D
+
+Expected:
+A and B should appear before C.
+C should appear before D.
+
+Result:
+PASS
